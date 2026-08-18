@@ -1,0 +1,581 @@
+/* ========================================
+   NOTES PAGE
+======================================== */
+
+.notes-page {
+    min-height: 100vh;
+
+    background: #0a0a09;
+    color: #e9e7e3;
+
+    font-family:
+        "Inter",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+}
+
+
+/* ========================================
+   HEADER
+======================================== */
+
+.notes-header {
+    width: min(100% - 48px, 1120px);
+
+    height: 110px;
+
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid #242422;
+}
+
+
+/* ========================================
+   BRAND
+======================================== */
+
+.notes-brand {
+    color: #efede8;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 25px;
+
+    text-decoration: none;
+
+    transition: opacity 0.2s ease;
+}
+
+.notes-brand:hover {
+    opacity: 0.65;
+}
+
+
+/* ========================================
+   NAVIGATION
+======================================== */
+
+.notes-nav {
+    display: flex;
+    align-items: center;
+
+    gap: 34px;
+}
+
+.notes-nav-link {
+    position: relative;
+
+    color: #77756f;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    letter-spacing: 0.16em;
+
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.notes-nav-link:hover {
+    color: #e9e7e3;
+}
+
+.notes-nav-link.active {
+    color: #e9e7e3;
+}
+
+.notes-nav-link.active::after {
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -20px;
+
+    width: 4px;
+    height: 4px;
+
+    border-radius: 50%;
+
+    background: #e9e7e3;
+
+    transform: translateX(-50%);
+}
+
+
+/* ========================================
+   MAIN
+======================================== */
+
+.notes-main {
+    width: min(100% - 48px, 820px);
+
+    margin: 0 auto;
+}
+
+
+/* ========================================
+   INTRO
+======================================== */
+
+.notes-intro {
+    padding-top: 125px;
+
+    padding-bottom: 75px;
+}
+
+.notes-eyebrow {
+    margin: 0 0 22px;
+
+    color: #77756f;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    letter-spacing: 0.28em;
+}
+
+.notes-intro h1 {
+    margin: 0;
+
+    color: #efede8;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: clamp(58px, 8vw, 92px);
+
+    font-weight: 400;
+
+    letter-spacing: -0.045em;
+
+    line-height: 0.95;
+}
+
+.notes-intro > p:last-child {
+    max-width: 500px;
+
+    margin: 32px 0 0;
+
+    color: #999790;
+
+    font-size: 17px;
+
+    line-height: 1.8;
+}
+
+
+/* ========================================
+   FORM SECTION
+======================================== */
+
+.notes-form-section {
+    padding-bottom: 100px;
+}
+
+
+/* ========================================
+   FORM
+======================================== */
+
+.notes-form {
+    padding: 30px 0;
+
+    border-top: 1px solid #242422;
+    border-bottom: 1px solid #242422;
+}
+
+.notes-field {
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 28px;
+}
+
+.notes-field label {
+    margin-bottom: 12px;
+
+    color: #77756f;
+
+    font-size: 10px;
+    font-weight: 500;
+
+    letter-spacing: 0.18em;
+}
+
+.notes-field input,
+.notes-field textarea {
+    width: 100%;
+
+    padding: 16px 0;
+
+    border: 0;
+    border-bottom: 1px solid #302f2c;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #e9e7e3;
+
+    font-family:
+        "Inter",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+
+    font-size: 16px;
+
+    transition:
+        border-color 0.2s ease;
+}
+
+.notes-field input::placeholder,
+.notes-field textarea::placeholder {
+    color: #55544f;
+}
+
+.notes-field input:focus,
+.notes-field textarea:focus {
+    border-color: #e9e7e3;
+}
+
+.notes-field textarea {
+    min-height: 130px;
+
+    resize: vertical;
+
+    line-height: 1.7;
+}
+
+
+/* ========================================
+   SUBMIT BUTTON
+======================================== */
+
+.notes-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 5px;
+
+    padding: 13px 0;
+
+    border: 0;
+
+    background: transparent;
+
+    color: #e9e7e3;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    letter-spacing: 0.15em;
+
+    cursor: pointer;
+
+    transition:
+        opacity 0.2s ease;
+}
+
+.notes-submit:hover {
+    opacity: 0.55;
+}
+
+.notes-submit:disabled {
+    opacity: 0.35;
+
+    cursor: not-allowed;
+}
+
+
+/* ========================================
+   MESSAGES HEADER
+======================================== */
+
+.notes-entries {
+    padding-bottom: 100px;
+}
+
+.notes-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 25px;
+
+    border-bottom: 1px solid #242422;
+}
+
+.notes-section-header h2 {
+    margin: 0;
+
+    color: #e9e7e3;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 31px;
+
+    font-weight: 400;
+}
+
+.notes-section-header span {
+    color: #686660;
+
+    font-size: 11px;
+
+    letter-spacing: 0.1em;
+}
+
+
+/* ========================================
+   MESSAGE LIST
+======================================== */
+
+.notes-entry-list {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ========================================
+   MESSAGE
+======================================== */
+
+.notes-entry {
+    padding: 38px 5px;
+
+    border-bottom: 1px solid #242422;
+}
+
+.notes-entry-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+.notes-entry-top h3 {
+    margin: 0;
+
+    color: #e9e7e3;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 21px;
+
+    font-weight: 400;
+}
+
+.notes-entry-top span {
+    flex-shrink: 0;
+
+    color: #5f5e59;
+
+    font-size: 9px;
+    font-weight: 500;
+
+    letter-spacing: 0.15em;
+}
+
+.notes-entry p {
+    max-width: 650px;
+
+    margin: 17px 0 0;
+
+    color: #999790;
+
+    font-size: 15px;
+
+    line-height: 1.75;
+}
+
+
+/* ========================================
+   TABLET
+======================================== */
+
+@media (max-width: 768px) {
+
+    .notes-header,
+    .notes-footer {
+        width: min(100% - 36px, 650px);
+    }
+
+    .notes-main {
+        width: min(100% - 36px, 650px);
+    }
+
+    .notes-header {
+        height: 90px;
+    }
+
+    .notes-nav {
+        gap: 22px;
+    }
+
+    .notes-intro {
+        padding-top: 100px;
+
+        padding-bottom: 65px;
+    }
+
+    .notes-intro h1 {
+        font-size: clamp(55px, 13vw, 82px);
+    }
+
+    .notes-intro > p:last-child {
+        font-size: 16px;
+    }
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 560px) {
+
+    .notes-header,
+    .notes-main,
+    .notes-footer {
+        width: calc(100% - 32px);
+    }
+
+    .notes-header {
+        height: 82px;
+    }
+
+    .notes-brand {
+        font-size: 21px;
+    }
+
+    .notes-nav {
+        gap: 18px;
+    }
+
+    .notes-nav-link {
+        font-size: 9px;
+
+        letter-spacing: 0.12em;
+    }
+
+    .notes-nav-link.active::after {
+        bottom: -15px;
+    }
+
+    .notes-intro {
+        padding-top: 85px;
+
+        padding-bottom: 55px;
+    }
+
+    .notes-eyebrow {
+        font-size: 9px;
+
+        letter-spacing: 0.22em;
+    }
+
+    .notes-intro h1 {
+        font-size: 58px;
+
+        letter-spacing: -0.05em;
+    }
+
+    .notes-intro > p:last-child {
+        margin-top: 28px;
+
+        font-size: 15px;
+
+        line-height: 1.75;
+    }
+
+    .notes-form-section {
+        padding-bottom: 75px;
+    }
+
+    .notes-form {
+        padding: 25px 0;
+    }
+
+    .notes-field {
+        margin-bottom: 25px;
+    }
+
+    .notes-field input,
+    .notes-field textarea {
+        font-size: 15px;
+    }
+
+    .notes-field textarea {
+        min-height: 120px;
+    }
+
+    .notes-section-header h2 {
+        font-size: 27px;
+    }
+
+    .notes-entry {
+        padding: 32px 4px;
+    }
+
+    .notes-entry-top {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 8px;
+    }
+
+    .notes-entry-top h3 {
+        font-size: 20px;
+    }
+
+    .notes-entry-top span {
+        font-size: 8px;
+    }
+
+    .notes-entry p {
+        margin-top: 15px;
+
+        font-size: 14px;
+
+        line-height: 1.7;
+    }
+
+    .notes-footer {
+        min-height: 100px;
+
+        padding-top: 28px;
+        padding-bottom: 28px;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 20px;
+    }
+
+    .notes-footer-links {
+        gap: 22px;
+    }
+}
