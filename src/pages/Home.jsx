@@ -2,6 +2,8 @@ import React from "react";
 import SpotifyPlayer from "../components/SpotifyPlayer";
 import "../styles/home.css";
 
+import { FiArrowUpRight } from "react-icons/fi";
+
 const projects = [
   {
     name: "NUMIO",
@@ -171,7 +173,7 @@ const Home = () => {
 
 
                 <span className="home-project-arrow">
-                  ↗
+                    <FiArrowUpRight />
                 </span>
 
               </a>
