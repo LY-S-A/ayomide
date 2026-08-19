@@ -1,25 +1,25 @@
 import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
 } from "react";
 
 import {
-  FaPause,
-  FaPlay,
-  FaStepBackward,
-  FaStepForward,
-  FaSpotify,
-  FaExternalLinkAlt,
+    FaPause,
+    FaPlay,
+    FaStepBackward,
+    FaStepForward,
+    FaSpotify,
+    FaExternalLinkAlt,
 } from "react-icons/fa";
 
 import {
-  getSpotifyToken,
-  handleSpotifyCallback,
-  isSpotifyLoggedIn,
-  loginWithSpotify,
-  logoutSpotify,
+    getSpotifyToken,
+    handleSpotifyCallback,
+    isSpotifyLoggedIn,
+    loginWithSpotify,
+    logoutSpotify,
 } from "../spotify/spotifyAuth";
 
 import "../styles/spotify-player.css";
@@ -27,1076 +27,1355 @@ import "../styles/spotify-player.css";
 
 const SpotifyPlayer = () => {
 
-  const playerRef =
-    useRef(null);
+    const playerRef = useRef(null);
+    const deviceIdRef = useRef(null);
+    const sdkIntervalRef = useRef(null);
+    const playbackIntervalRef = useRef(null);
+    const progressIntervalRef = useRef(null);
 
-  const deviceIdRef =
-    useRef(null);
+    const [loggedIn, setLoggedIn] = useState(false);
+    const [sdkReady, setSdkReady] = useState(false);
+    const [playerReady, setPlayerReady] = useState(false);
 
-  const progressTimerRef =
-    useRef(null);
+    const [track, setTrack] = useState(null);
+    const [playing, setPlaying] = useState(false);
 
+    const [position, setPosition] = useState(0);
+    const [duration, setDuration] = useState(0);
 
-  const [loggedIn, setLoggedIn] =
-    useState(false);
+    const [loading, setLoading] = useState(false);
+    const [connecting, setConnecting] = useState(false);
 
-  const [ready, setReady] =
-    useState(false);
-
-  const [playing, setPlaying] =
-    useState(false);
-
-  const [track, setTrack] =
-    useState(null);
-
-  const [position, setPosition] =
-    useState(0);
-
-  const [duration, setDuration] =
-    useState(0);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [connecting, setConnecting] =
-    useState(false);
+    const [error, setError] = useState("");
 
 
-  // ========================================
-  // FORMAT TIME
-  // ========================================
+    /* ========================================
+       FORMAT TIME
+    ======================================== */
 
-  const formatTime = (milliseconds) => {
+    const formatTime = (milliseconds = 0) => {
 
-    const totalSeconds =
-      Math.floor(
-        milliseconds / 1000
-      );
+        const totalSeconds =
+            Math.floor(milliseconds / 1000);
 
-    const minutes =
-      Math.floor(
-        totalSeconds / 60
-      );
+        const minutes =
+            Math.floor(totalSeconds / 60);
 
-    const seconds =
-      totalSeconds % 60;
+        const seconds =
+            totalSeconds % 60;
 
-    return `${minutes}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-
-  };
+        return `${minutes}:${seconds
+            .toString()
+            .padStart(2, "0")}`;
+    };
 
 
-  // ========================================
-  // FETCH CURRENT PLAYBACK
-  // ========================================
+    /* ========================================
+       FETCH CURRENT SPOTIFY PLAYBACK
+    ======================================== */
 
-  const fetchCurrentTrack =
-    useCallback(async () => {
+    const fetchCurrentTrack = useCallback(
+        async () => {
 
-      const token =
-        await getSpotifyToken();
+            const token =
+                await getSpotifyToken();
 
-      if (!token) {
-        return;
-      }
+            if (!token) {
+                return;
+            }
 
-      try {
+            try {
 
-        const response =
-          await fetch(
-            "https://api.spotify.com/v1/me/player",
-            {
+                const response =
+                    await fetch(
+                        "https://api.spotify.com/v1/me/player",
+                        {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${token}`,
+                            },
+                        }
+                    );
 
-              headers: {
-                Authorization:
-                  `Bearer ${token}`,
-              },
+                /*
+                 * 204 means Spotify currently
+                 * has no active playback.
+                 */
+
+                if (response.status === 204) {
+
+                    setTrack(null);
+                    setPlaying(false);
+                    setPosition(0);
+                    setDuration(0);
+
+                    return;
+                }
+
+
+                if (response.status === 401) {
+
+                    setError(
+                        "Spotify session expired. Please reconnect."
+                    );
+
+                    return;
+                }
+
+
+                if (!response.ok) {
+
+                    console.error(
+                        "Spotify playback request failed:",
+                        response.status
+                    );
+
+                    return;
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (!data.item) {
+
+                    setTrack(null);
+                    setPlaying(false);
+
+                    return;
+                }
+
+
+                setTrack(data.item);
+
+                setPlaying(
+                    Boolean(data.is_playing)
+                );
+
+                setPosition(
+                    data.progress_ms || 0
+                );
+
+                setDuration(
+                    data.item.duration_ms || 0
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Spotify playback error:",
+                    err
+                );
 
             }
-          );
 
-        if (response.status === 204) {
+        },
+        []
+    );
 
-          setTrack(null);
-          setPlaying(false);
 
-          return;
+    /* ========================================
+       INITIAL AUTH
+    ======================================== */
 
-        }
+    useEffect(() => {
 
-        if (!response.ok) {
-          return;
-        }
+        const initializeAuth = async () => {
 
-        const data =
-          await response.json();
+            try {
 
-        if (data.item) {
+                const callbackHandled =
+                    await handleSpotifyCallback();
 
-          setTrack(data.item);
+                if (
+                    callbackHandled ||
+                    isSpotifyLoggedIn()
+                ) {
 
-          setPosition(
-            data.progress_ms || 0
-          );
+                    setLoggedIn(true);
 
-          setDuration(
-            data.item.duration_ms || 0
-          );
+                }
 
-          setPlaying(
-            data.is_playing
-          );
+            } catch (err) {
 
-        }
+                console.error(
+                    "Spotify authentication error:",
+                    err
+                );
 
-      } catch (err) {
+                setError(
+                    "Unable to authenticate with Spotify."
+                );
 
-        console.error(
-          "Spotify playback error:",
-          err
-        );
+            }
 
-      }
+        };
+
+        initializeAuth();
 
     }, []);
 
 
-  // ========================================
-  // INITIAL AUTH
-  // ========================================
+    /* ========================================
+       FETCH CURRENT TRACK
+    ======================================== */
 
-  useEffect(() => {
+    useEffect(() => {
 
-    const initializeAuth =
-      async () => {
-
-        const callbackHandled =
-          await handleSpotifyCallback();
-
-        if (
-          callbackHandled ||
-          isSpotifyLoggedIn()
-        ) {
-
-          setLoggedIn(true);
-
+        if (!loggedIn) {
+            return;
         }
 
-      };
+        fetchCurrentTrack();
 
-    initializeAuth();
+        playbackIntervalRef.current =
+            setInterval(
+                fetchCurrentTrack,
+                3000
+            );
 
-  }, []);
+        return () => {
 
+            if (
+                playbackIntervalRef.current
+            ) {
 
-  // ========================================
-  // LOAD CURRENT SONG
-  // ========================================
+                clearInterval(
+                    playbackIntervalRef.current
+                );
 
-  useEffect(() => {
+            }
 
-    if (!loggedIn) {
-      return;
-    }
+        };
 
-    fetchCurrentTrack();
-
-    const interval =
-      setInterval(
+    }, [
+        loggedIn,
         fetchCurrentTrack,
-        5000
-      );
-
-    return () =>
-      clearInterval(interval);
-
-  }, [
-    loggedIn,
-    fetchCurrentTrack,
-  ]);
+    ]);
 
 
-  // ========================================
-  // LOAD SDK
-  // ========================================
+    /* ========================================
+       LOAD SPOTIFY SDK
+    ======================================== */
 
-  useEffect(() => {
+    useEffect(() => {
 
-    if (!loggedIn) {
-      return;
-    }
+        if (!loggedIn) {
+            return;
+        }
 
-    if (
-      window.Spotify
-    ) {
 
-      initializePlayer();
+        const initializeSDK = () => {
 
-      return;
+            if (
+                !window.Spotify
+            ) {
+                return false;
+            }
 
-    }
+            setSdkReady(true);
 
-    window.onSpotifyWebPlaybackSDKReady =
-      () => {
+            return true;
+        };
+
+
+        /*
+         * SDK might already be loaded.
+         */
+
+        if (initializeSDK()) {
+            return;
+        }
+
+
+        /*
+         * Otherwise wait for it.
+         */
+
+        window.onSpotifyWebPlaybackSDKReady =
+            () => {
+
+                setSdkReady(true);
+
+            };
+
+
+        sdkIntervalRef.current =
+            setInterval(() => {
+
+                if (window.Spotify) {
+
+                    setSdkReady(true);
+
+                    clearInterval(
+                        sdkIntervalRef.current
+                    );
+
+                }
+
+            }, 500);
+
+
+        return () => {
+
+            if (
+                sdkIntervalRef.current
+            ) {
+
+                clearInterval(
+                    sdkIntervalRef.current
+                );
+
+            }
+
+        };
+
+    }, [loggedIn]);
+
+
+    /* ========================================
+       INITIALIZE PLAYER
+    ======================================== */
+
+    useEffect(() => {
+
+        if (
+            !loggedIn ||
+            !sdkReady ||
+            playerRef.current
+        ) {
+            return;
+        }
+
+
+        const initializePlayer =
+            async () => {
+
+                const token =
+                    await getSpotifyToken();
+
+                if (!token) {
+                    return;
+                }
+
+
+                const player =
+                    new window.Spotify.Player({
+
+                        name:
+                            "Ayomide Portfolio",
+
+                        volume: 0.7,
+
+                        getOAuthToken:
+                            async (callback) => {
+
+                                const freshToken =
+                                    await getSpotifyToken();
+
+                                callback(
+                                    freshToken
+                                );
+
+                            },
+
+                    });
+
+
+                playerRef.current =
+                    player;
+
+
+                /* ==================================
+                   READY
+                ================================== */
+
+                player.addListener(
+                    "ready",
+                    ({ device_id }) => {
+
+                        console.log(
+                            "Spotify Web Player ready:",
+                            device_id
+                        );
+
+                        deviceIdRef.current =
+                            device_id;
+
+                        setPlayerReady(true);
+
+                        setError("");
+
+                    }
+                );
+
+
+                /* ==================================
+                   NOT READY
+                ================================== */
+
+                player.addListener(
+                    "not_ready",
+                    ({ device_id }) => {
+
+                        console.log(
+                            "Spotify device offline:",
+                            device_id
+                        );
+
+                        setPlayerReady(false);
+
+                    }
+                );
+
+
+                /* ==================================
+                   PLAYER STATE
+                ================================== */
+
+                player.addListener(
+                    "player_state_changed",
+                    (state) => {
+
+                        if (!state) {
+                            return;
+                        }
+
+
+                        const currentTrack =
+                            state.track_window
+                                ?.current_track;
+
+
+                        if (currentTrack) {
+
+                            setTrack(
+                                currentTrack
+                            );
+
+                            setPosition(
+                                state.position
+                            );
+
+                            setDuration(
+                                state.duration
+                            );
+
+                        }
+
+
+                        setPlaying(
+                            !state.paused
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   INITIALIZATION ERROR
+                ================================== */
+
+                player.addListener(
+                    "initialization_error",
+                    ({ message }) => {
+
+                        console.error(
+                            "Spotify initialization error:",
+                            message
+                        );
+
+                        setError(
+                            message
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   AUTH ERROR
+                ================================== */
+
+                player.addListener(
+                    "authentication_error",
+                    ({ message }) => {
+
+                        console.error(
+                            "Spotify authentication error:",
+                            message
+                        );
+
+                        setError(
+                            "Spotify authentication failed. Please reconnect."
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   ACCOUNT ERROR
+                ================================== */
+
+                player.addListener(
+                    "account_error",
+                    ({ message }) => {
+
+                        console.error(
+                            "Spotify account error:",
+                            message
+                        );
+
+                        setError(
+                            "Spotify Premium is required for browser playback."
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   PLAYBACK ERROR
+                ================================== */
+
+                player.addListener(
+                    "playback_error",
+                    ({ message }) => {
+
+                        console.error(
+                            "Spotify playback error:",
+                            message
+                        );
+
+                        setError(
+                            message
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   AUTOPLAY
+                ================================== */
+
+                player.addListener(
+                    "autoplay_failed",
+                    () => {
+
+                        setError(
+                            "Click play to start Spotify."
+                        );
+
+                    }
+                );
+
+
+                /* ==================================
+                   CONNECT
+                ================================== */
+
+                const connected =
+                    await player.connect();
+
+
+                if (!connected) {
+
+                    console.error(
+                        "Spotify player failed to connect."
+                    );
+
+                    setError(
+                        "Spotify player could not connect."
+                    );
+
+                }
+
+            };
+
 
         initializePlayer();
 
-      };
+
+        return () => {
+
+            if (
+                playerRef.current
+            ) {
+
+                playerRef.current.disconnect();
+
+                playerRef.current =
+                    null;
+
+            }
+
+        };
+
+    }, [
+        loggedIn,
+        sdkReady,
+    ]);
 
 
-    function initializePlayer() {
+    /* ========================================
+       PROGRESS TIMER
+    ======================================== */
 
-      if (playerRef.current) {
-        return;
-      }
+    useEffect(() => {
 
-      playerRef.current =
-        new window.Spotify.Player({
+        if (
+            progressIntervalRef.current
+        ) {
 
-          name:
-            "Ayomide Portfolio",
-
-          volume: 0.5,
-
-          getOAuthToken:
-            async (callback) => {
-
-              const token =
-                await getSpotifyToken();
-
-              callback(token);
-
-            },
-
-          enableMediaSession:
-            true,
-
-        });
-
-
-      // ====================================
-      // READY
-      // ====================================
-
-      playerRef.current.addListener(
-        "ready",
-        ({ device_id }) => {
-
-          deviceIdRef.current =
-            device_id;
-
-          setReady(true);
-
-          console.log(
-            "Spotify player ready:",
-            device_id
-          );
+            clearInterval(
+                progressIntervalRef.current
+            );
 
         }
-      );
 
 
-      // ====================================
-      // NOT READY
-      // ====================================
-
-      playerRef.current.addListener(
-        "not_ready",
-        () => {
-
-          setReady(false);
-
-        }
-      );
-
-
-      // ====================================
-      // PLAYER STATE
-      // ====================================
-
-      playerRef.current.addListener(
-        "player_state_changed",
-        (state) => {
-
-          if (!state) {
+        if (!playing) {
             return;
-          }
+        }
 
-          const currentTrack =
-            state.track_window
-              ?.current_track;
 
-          if (currentTrack) {
+        progressIntervalRef.current =
+            setInterval(() => {
 
-            setTrack(
-              currentTrack
+                setPosition(
+                    current => {
+
+                        if (
+                            duration &&
+                            current >= duration
+                        ) {
+
+                            return duration;
+                        }
+
+                        return current + 1000;
+
+                    }
+                );
+
+            }, 1000);
+
+
+        return () => {
+
+            if (
+                progressIntervalRef.current
+            ) {
+
+                clearInterval(
+                    progressIntervalRef.current
+                );
+
+            }
+
+        };
+
+    }, [
+        playing,
+        duration,
+    ]);
+
+
+    /* ========================================
+       LOGIN
+    ======================================== */
+
+    const handleLogin = async () => {
+
+        setLoading(true);
+        setError("");
+
+        try {
+
+            await loginWithSpotify();
+
+        } catch (err) {
+
+            console.error(err);
+
+            setError(
+                "Unable to connect to Spotify."
             );
 
-            setPosition(
-              state.position
-            );
-
-            setDuration(
-              state.duration
-            );
-
-          }
-
-          setPlaying(
-            !state.paused
-          );
+            setLoading(false);
 
         }
-      );
-
-
-      // ====================================
-      // ERRORS
-      // ====================================
-
-      playerRef.current.addListener(
-        "initialization_error",
-        ({ message }) => {
-
-          console.error(
-            "Spotify initialization error:",
-            message
-          );
-
-          setError(message);
-
-        }
-      );
-
-
-      playerRef.current.addListener(
-        "authentication_error",
-        ({ message }) => {
-
-          console.error(
-            "Spotify authentication error:",
-            message
-          );
-
-          setError(
-            "Spotify authentication expired."
-          );
-
-        }
-      );
-
-
-      playerRef.current.addListener(
-        "account_error",
-        ({ message }) => {
-
-          console.error(
-            "Spotify account error:",
-            message
-          );
-
-          setError(
-            "Spotify Premium is required for browser playback."
-          );
-
-        }
-      );
-
-
-      playerRef.current.addListener(
-        "playback_error",
-        ({ message }) => {
-
-          console.error(
-            "Spotify playback error:",
-            message
-          );
-
-          setError(message);
-
-        }
-      );
-
-
-      playerRef.current.addListener(
-        "autoplay_failed",
-        () => {
-
-          setError(
-            "Click play to start Spotify."
-          );
-
-        }
-      );
-
-
-      playerRef.current.connect();
-
-    }
-
-    return () => {
-
-      if (
-        progressTimerRef.current
-      ) {
-
-        clearInterval(
-          progressTimerRef.current
-        );
-
-      }
 
     };
 
-  }, [loggedIn]);
+
+    /* ========================================
+       LOGOUT
+    ======================================== */
+
+    const handleLogout = () => {
+
+        if (
+            playerRef.current
+        ) {
+
+            playerRef.current.disconnect();
+
+            playerRef.current =
+                null;
+
+        }
+
+        logoutSpotify();
+
+        setLoggedIn(false);
+        setSdkReady(false);
+        setPlayerReady(false);
+
+        setTrack(null);
+        setPlaying(false);
+
+        setPosition(0);
+        setDuration(0);
+
+        setError("");
+
+    };
 
 
-  // ========================================
-  // PROGRESS TIMER
-  // ========================================
+    /* ========================================
+       PLAY / PAUSE
+    ======================================== */
 
-  useEffect(() => {
+    const togglePlay = async () => {
 
-    if (
-      progressTimerRef.current
-    ) {
+        if (
+            !playerRef.current
+        ) {
+            return;
+        }
 
-      clearInterval(
-        progressTimerRef.current
-      );
+        try {
 
-    }
+            setError("");
 
-    if (!playing) {
-      return;
-    }
+            await playerRef.current
+                .togglePlay();
 
-    progressTimerRef.current =
-      setInterval(() => {
+        } catch (err) {
 
-        setPosition(
-          (current) => {
+            console.error(err);
+
+            setError(
+                "Unable to control Spotify."
+            );
+
+        }
+
+    };
+
+
+    /* ========================================
+       NEXT
+    ======================================== */
+
+    const nextTrack = async () => {
+
+        if (
+            !playerRef.current
+        ) {
+            return;
+        }
+
+        try {
+
+            await playerRef.current
+                .nextTrack();
+
+        } catch (err) {
+
+            console.error(err);
+
+        }
+
+    };
+
+
+    /* ========================================
+       PREVIOUS
+    ======================================== */
+
+    const previousTrack = async () => {
+
+        if (
+            !playerRef.current
+        ) {
+            return;
+        }
+
+        try {
+
+            await playerRef.current
+                .previousTrack();
+
+        } catch (err) {
+
+            console.error(err);
+
+        }
+
+    };
+
+
+    /* ========================================
+       TRANSFER PLAYBACK
+    ======================================== */
+
+    const transferPlayback = async () => {
+
+        const token =
+            await getSpotifyToken();
+
+        const deviceId =
+            deviceIdRef.current;
+
+
+        if (
+            !token ||
+            !deviceId
+        ) {
+
+            setError(
+                "Spotify player is not ready yet."
+            );
+
+            return;
+        }
+
+
+        setConnecting(true);
+        setError("");
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "https://api.spotify.com/v1/me/player",
+                    {
+
+                        method: "PUT",
+
+                        headers: {
+
+                            Authorization:
+                                `Bearer ${token}`,
+
+                            "Content-Type":
+                                "application/json",
+
+                        },
+
+                        body:
+                            JSON.stringify({
+
+                                device_ids: [
+                                    deviceId
+                                ],
+
+                                play: true,
+
+                            }),
+
+                    }
+                );
+
 
             if (
-              duration &&
-              current >= duration
+                !response.ok &&
+                response.status !== 204
             ) {
 
-              return duration;
+                const data =
+                    await response.json()
+                        .catch(() => null);
+
+                console.error(
+                    "Transfer playback error:",
+                    data
+                );
+
+                throw new Error(
+                    "Unable to transfer playback."
+                );
 
             }
 
-            return current + 1000;
 
-          }
+            await fetchCurrentTrack();
+
+        } catch (err) {
+
+            console.error(err);
+
+            setError(
+                "Could not move Spotify playback to this website."
+            );
+
+        } finally {
+
+            setConnecting(false);
+
+        }
+
+    };
+
+
+    /* ========================================
+       OPEN SPOTIFY
+    ======================================== */
+
+    const openSpotify = () => {
+
+        const url =
+            track
+                ?.external_urls
+                ?.spotify;
+
+
+        if (url) {
+
+            window.open(
+                url,
+                "_blank",
+                "noopener,noreferrer"
+            );
+
+        }
+
+    };
+
+
+    /* ========================================
+       LOGIN SCREEN
+    ======================================== */
+
+    if (!loggedIn) {
+
+        return (
+
+            <section className="spotify-player">
+
+                <div className="spotify-player-top">
+
+                    <div>
+
+                        <p className="spotify-label">
+                            I'M CURRENTLY LISTENING TO
+                        </p>
+
+                        <h2>
+                            Connect Spotify
+                        </h2>
+
+                        <p className="spotify-description">
+                            Connect Spotify to show
+                            what I'm currently listening to.
+                        </p>
+
+                    </div>
+
+                    <FaSpotify
+                        className="spotify-logo"
+                    />
+
+                </div>
+
+
+                <button
+                    className="spotify-connect-button"
+                    onClick={handleLogin}
+                    disabled={loading}
+                >
+
+                    <FaSpotify />
+
+                    {loading
+                        ? "Connecting..."
+                        : "Connect Spotify"}
+
+                </button>
+
+
+                {error && (
+
+                    <p className="spotify-error">
+                        {error}
+                    </p>
+
+                )}
+
+            </section>
+
         );
 
-      }, 1000);
-
-    return () =>
-      clearInterval(
-        progressTimerRef.current
-      );
-
-  }, [
-    playing,
-    duration,
-  ]);
-
-
-  // ========================================
-  // LOGIN
-  // ========================================
-
-  const handleLogin = async () => {
-
-    setLoading(true);
-
-    try {
-
-      await loginWithSpotify();
-
-    } catch (err) {
-
-      console.error(err);
-
-      setError(
-        "Unable to connect to Spotify."
-      );
-
-      setLoading(false);
-
     }
 
-  };
 
+    /* ========================================
+       WAITING FOR SDK
+    ======================================== */
 
-  // ========================================
-  // LOGOUT
-  // ========================================
+    if (!sdkReady) {
 
-  const handleLogout = () => {
+        return (
 
-    if (playerRef.current) {
+            <section className="spotify-player">
 
-      playerRef.current.disconnect();
+                <div className="spotify-player-top">
 
-      playerRef.current =
-        null;
+                    <div>
 
-    }
+                        <p className="spotify-label">
+                            I'M CURRENTLY LISTENING TO
+                        </p>
 
-    logoutSpotify();
+                        <h2>
+                            Connecting to Spotify...
+                        </h2>
 
-    setLoggedIn(false);
-    setReady(false);
-    setTrack(null);
-    setPlaying(false);
+                        <p className="spotify-description">
+                            Setting up the Spotify player.
+                        </p>
 
-  };
+                    </div>
 
+                    <FaSpotify
+                        className="spotify-logo"
+                    />
 
-  // ========================================
-  // PLAY / PAUSE
-  // ========================================
+                </div>
 
-  const togglePlay = async () => {
+            </section>
 
-    if (!playerRef.current) {
-      return;
-    }
-
-    setError("");
-
-    try {
-
-      await playerRef.current
-        .togglePlay();
-
-    } catch (err) {
-
-      console.error(err);
-
-      setError(
-        "Unable to control Spotify."
-      );
-
-    }
-
-  };
-
-
-  // ========================================
-  // NEXT
-  // ========================================
-
-  const nextTrack = async () => {
-
-    if (!playerRef.current) {
-      return;
-    }
-
-    try {
-
-      await playerRef.current
-        .nextTrack();
-
-    } catch (err) {
-
-      console.error(err);
-
-    }
-
-  };
-
-
-  // ========================================
-  // PREVIOUS
-  // ========================================
-
-  const previousTrack = async () => {
-
-    if (!playerRef.current) {
-      return;
-    }
-
-    try {
-
-      await playerRef.current
-        .previousTrack();
-
-    } catch (err) {
-
-      console.error(err);
-
-    }
-
-  };
-
-
-  // ========================================
-  // TRANSFER TO WEBSITE
-  // ========================================
-
-  const transferPlayback = async () => {
-
-    const token =
-      await getSpotifyToken();
-
-    const deviceId =
-      deviceIdRef.current;
-
-    if (!token || !deviceId) {
-      return;
-    }
-
-    setConnecting(true);
-
-    try {
-
-      const response =
-        await fetch(
-          "https://api.spotify.com/v1/me/player",
-          {
-
-            method: "PUT",
-
-            headers: {
-
-              Authorization:
-                `Bearer ${token}`,
-
-              "Content-Type":
-                "application/json",
-
-            },
-
-            body: JSON.stringify({
-
-              device_ids: [
-                deviceId
-              ],
-
-              play: false,
-
-            }),
-
-          }
         );
 
-      if (!response.ok) {
+    }
 
-        throw new Error(
-          "Unable to transfer playback."
+
+    /* ========================================
+       NO CURRENT TRACK
+    ======================================== */
+
+    if (!track) {
+
+        return (
+
+            <section className="spotify-player">
+
+                <div className="spotify-player-top">
+
+                    <div>
+
+                        <p className="spotify-label">
+                            I'M CURRENTLY LISTENING TO
+                        </p>
+
+                        <h2>
+                            Nothing playing
+                        </h2>
+
+                        <p className="spotify-description">
+                            Start playing a song on Spotify
+                            and it will appear here automatically.
+                        </p>
+
+                    </div>
+
+
+                    <FaSpotify
+                        className="spotify-logo"
+                    />
+
+                </div>
+
+
+                <div className="spotify-player-actions">
+
+                    {playerReady && (
+
+                        <button
+                            className="spotify-connect-device"
+                            onClick={transferPlayback}
+                            disabled={connecting}
+                        >
+
+                            {connecting
+                                ? "Connecting..."
+                                : "Play on this website"}
+
+                        </button>
+
+                    )}
+
+
+                    <button
+                        className="spotify-logout"
+                        onClick={handleLogout}
+                    >
+                        Disconnect
+                    </button>
+
+                </div>
+
+
+                {error && (
+
+                    <p className="spotify-error">
+                        {error}
+                    </p>
+
+                )}
+
+            </section>
+
         );
 
-      }
-
-      setError("");
-
-    } catch (err) {
-
-      console.error(err);
-
-      setError(
-        "Could not connect Spotify playback."
-      );
-
-    } finally {
-
-      setConnecting(false);
-
     }
 
-  };
+
+    /* ========================================
+       TRACK DATA
+    ======================================== */
+
+    const image =
+        track.album
+            ?.images
+            ?.length
+            ? track.album.images[0].url
+            : null;
 
 
-  // ========================================
-  // OPEN SPOTIFY
-  // ========================================
-
-  const openSpotify = () => {
-
-    if (
-      track?.external_urls
-        ?.spotify
-    ) {
-
-      window.open(
-        track.external_urls.spotify,
-        "_blank",
-        "noopener,noreferrer"
-      );
-
-    }
-
-  };
+    const artist =
+        track.artists
+            ?.map(
+                artist =>
+                    artist.name
+            )
+            .join(", ");
 
 
-  // ========================================
-  // NOT LOGGED IN
-  // ========================================
+    const progressPercent =
+        duration
+            ? Math.min(
+                100,
+                (position / duration) * 100
+            )
+            : 0;
 
-  if (!loggedIn) {
+
+    /* ========================================
+       PLAYER
+    ======================================== */
 
     return (
 
-      <section className="spotify-player">
+        <section className="spotify-player">
 
-        <div className="spotify-player-top">
+            <div className="spotify-player-heading">
 
-          <div>
+                <p className="spotify-label">
+                    I'M CURRENTLY LISTENING TO
+                </p>
 
-            <p className="spotify-label">
-              I'M CURRENTLY LISTENING TO
-            </p>
+                <FaSpotify
+                    className="spotify-logo"
+                />
 
-            <h2>
-              Connect Spotify
-            </h2>
+            </div>
 
-            <p className="spotify-description">
-              Connect your Spotify account to
-              show what I'm currently listening to.
-            </p>
 
-          </div>
+            <div className="spotify-track">
 
-          <FaSpotify
-            className="spotify-logo"
-          />
+                {image && (
 
-        </div>
+                    <img
+                        src={image}
+                        alt={track.name}
+                        className="spotify-cover"
+                    />
 
-        <button
-          className="spotify-connect-button"
-          onClick={handleLogin}
-          disabled={loading}
-        >
+                )}
 
-          <FaSpotify />
 
-          {loading
-            ? "Connecting..."
-            : "Connect Spotify"}
+                <div className="spotify-track-info">
 
-        </button>
+                    <h2>
+                        {track.name}
+                    </h2>
 
-      </section>
+                    <p>
+                        {artist}
+                    </p>
+
+                    <span>
+                        {track.album?.name}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div className="spotify-progress-container">
+
+                <div className="spotify-time">
+
+                    <span>
+                        {formatTime(position)}
+                    </span>
+
+                    <span>
+                        {formatTime(duration)}
+                    </span>
+
+                </div>
+
+
+                <div className="spotify-progress">
+
+                    <div
+                        className="spotify-progress-bar"
+                        style={{
+                            width:
+                                `${progressPercent}%`,
+                        }}
+                    />
+
+                </div>
+
+            </div>
+
+
+            <div className="spotify-controls">
+
+                <button
+                    onClick={previousTrack}
+                    aria-label="Previous track"
+                >
+                    <FaStepBackward />
+                </button>
+
+
+                <button
+                    className="spotify-play-button"
+                    onClick={togglePlay}
+                    aria-label={
+                        playing
+                            ? "Pause"
+                            : "Play"
+                    }
+                >
+
+                    {playing
+                        ? <FaPause />
+                        : <FaPlay />}
+
+                </button>
+
+
+                <button
+                    onClick={nextTrack}
+                    aria-label="Next track"
+                >
+                    <FaStepForward />
+                </button>
+
+            </div>
+
+
+            <div className="spotify-footer">
+
+                <div className="spotify-status">
+
+                    <span
+                        className={
+                            playerReady
+                                ? "spotify-status-dot online"
+                                : "spotify-status-dot"
+                        }
+                    />
+
+                    <span>
+
+                        {playerReady
+                            ? "Spotify connected"
+                            : "Connecting player..."}
+
+                    </span>
+
+                </div>
+
+
+                <div className="spotify-footer-actions">
+
+                    {playerReady && (
+
+                        <button
+                            onClick={transferPlayback}
+                            disabled={connecting}
+                            className="spotify-transfer"
+                        >
+
+                            {connecting
+                                ? "Connecting..."
+                                : "Play here"}
+
+                        </button>
+
+                    )}
+
+
+                    <button
+                        onClick={openSpotify}
+                        className="spotify-open"
+                    >
+
+                        Spotify
+
+                        <FaExternalLinkAlt />
+
+                    </button>
+
+
+                    <button
+                        className="spotify-logout"
+                        onClick={handleLogout}
+                    >
+                        Disconnect
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            {error && (
+
+                <p className="spotify-error">
+                    {error}
+                </p>
+
+            )}
+
+        </section>
 
     );
-
-  }
-
-
-  // ========================================
-  // NO TRACK
-  // ========================================
-
-  if (!track) {
-
-    return (
-
-      <section className="spotify-player">
-
-        <div className="spotify-player-top">
-
-          <div>
-
-            <p className="spotify-label">
-              I'M CURRENTLY LISTENING TO
-            </p>
-
-            <h2>
-              Nothing playing
-            </h2>
-
-            <p className="spotify-description">
-              Start playing something on Spotify
-              and it will appear here.
-            </p>
-
-          </div>
-
-          <FaSpotify
-            className="spotify-logo"
-          />
-
-        </div>
-
-        <div className="spotify-player-actions">
-
-          {ready && (
-
-            <button
-              className="spotify-connect-device"
-              onClick={transferPlayback}
-              disabled={connecting}
-            >
-
-              {connecting
-                ? "Connecting..."
-                : "Play on this website"}
-
-            </button>
-
-          )}
-
-          <button
-            className="spotify-logout"
-            onClick={handleLogout}
-          >
-            Disconnect
-          </button>
-
-        </div>
-
-      </section>
-
-    );
-
-  }
-
-
-  const image =
-    track.album?.images?.[0]?.url;
-
-
-  const artist =
-    track.artists
-      ?.map((artist) => artist.name)
-      .join(", ");
-
-
-  const progressPercent =
-    duration
-      ? Math.min(
-          100,
-          (position / duration) * 100
-        )
-      : 0;
-
-
-  return (
-
-    <section className="spotify-player">
-
-      {/* ====================================
-          LABEL
-      ==================================== */}
-
-      <div className="spotify-player-heading">
-
-        <p className="spotify-label">
-          I'M CURRENTLY LISTENING TO
-        </p>
-
-        <FaSpotify
-          className="spotify-logo"
-        />
-
-      </div>
-
-
-      {/* ====================================
-          TRACK
-      ==================================== */}
-
-      <div className="spotify-track">
-
-        {image && (
-
-          <img
-            src={image}
-            alt={track.name}
-            className="spotify-cover"
-          />
-
-        )}
-
-
-        <div className="spotify-track-info">
-
-          <h2>
-            {track.name}
-          </h2>
-
-          <p>
-            {artist}
-          </p>
-
-          <span>
-            {track.album?.name}
-          </span>
-
-        </div>
-
-      </div>
-
-
-      {/* ====================================
-          PROGRESS
-      ==================================== */}
-
-      <div className="spotify-progress-container">
-
-        <div className="spotify-time">
-
-          <span>
-            {formatTime(position)}
-          </span>
-
-          <span>
-            {formatTime(duration)}
-          </span>
-
-        </div>
-
-        <div className="spotify-progress">
-
-          <div
-            className="spotify-progress-bar"
-            style={{
-              width:
-                `${progressPercent}%`,
-            }}
-          />
-
-        </div>
-
-      </div>
-
-
-      {/* ====================================
-          CONTROLS
-      ==================================== */}
-
-      <div className="spotify-controls">
-
-        <button
-          onClick={previousTrack}
-          aria-label="Previous track"
-        >
-
-          <FaStepBackward />
-
-        </button>
-
-
-        <button
-          className="spotify-play-button"
-          onClick={togglePlay}
-          aria-label={
-            playing
-              ? "Pause"
-              : "Play"
-          }
-        >
-
-          {playing
-            ? <FaPause />
-            : <FaPlay />}
-
-        </button>
-
-
-        <button
-          onClick={nextTrack}
-          aria-label="Next track"
-        >
-
-          <FaStepForward />
-
-        </button>
-
-      </div>
-
-
-      {/* ====================================
-          FOOTER
-      ==================================== */}
-
-      <div className="spotify-footer">
-
-        <div className="spotify-status">
-
-          <span
-            className={
-              ready
-                ? "spotify-status-dot online"
-                : "spotify-status-dot"
-            }
-          />
-
-          <span>
-
-            {ready
-              ? "Spotify connected"
-              : "Connecting..."}
-
-          </span>
-
-        </div>
-
-
-        <div className="spotify-footer-actions">
-
-          {ready && (
-
-            <button
-              onClick={transferPlayback}
-              disabled={connecting}
-              className="spotify-transfer"
-            >
-
-              {connecting
-                ? "Connecting..."
-                : "Play here"}
-
-            </button>
-
-          )}
-
-          <button
-            className="spotify-open"
-            onClick={openSpotify}
-          >
-
-            Spotify
-
-            <FaExternalLinkAlt />
-
-          </button>
-
-          <button
-            className="spotify-logout"
-            onClick={handleLogout}
-          >
-            Disconnect
-          </button>
-
-        </div>
-
-      </div>
-
-
-      {error && (
-
-        <p className="spotify-error">
-          {error}
-        </p>
-
-      )}
-
-    </section>
-
-  );
 
 };
+
 
 export default SpotifyPlayer;
