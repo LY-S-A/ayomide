@@ -1,4 +1,5 @@
 import React from "react";
+import SpotifyPlayer from "../components/SpotifyPlayer";
 import "../styles/home.css";
 
 const projects = [
@@ -124,38 +125,7 @@ const Home = () => {
             MUSIC
         ======================================== */}
 
-        <section className="home-music">
-
-          <p className="home-music-label">
-            I'M CURRENTLY LISTENING TO
-          </p>
-
-          <div className="home-music-content">
-
-            <div>
-              <h2>
-                Unknown / Nth — Hozier
-              </h2>
-
-              <p>
-                Android
-              </p>
-            </div>
-
-
-            <div className="home-music-icon">
-
-              <span />
-              <span />
-              <span />
-              <span />
-              <span />
-
-            </div>
-
-          </div>
-
-        </section>
+         <SpotifyPlayer />
 
 
         {/* ========================================
