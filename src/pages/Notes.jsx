@@ -44,7 +44,7 @@ const Notes = () => {
             setError("");
 
             const response = await axios.get(
-                `${API_URL}/api/notes`
+                `${API_URL}/api/note`
             );
 
 
@@ -144,7 +144,7 @@ const Notes = () => {
 
             const response =
                 await axios.post(
-                    `${API_URL}/api/notes`,
+                    `${API_URL}/api/note`,
                     {
                         name,
                         message,
