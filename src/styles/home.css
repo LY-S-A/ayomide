@@ -163,6 +163,8 @@
 }
 
 .home-intro {
+  max-width: 560px;
+
   margin: 35px 0 0;
 
   color: #999790;
@@ -170,8 +172,9 @@
   font-size: 18px;
 
   line-height: 1.8;
-}
 
+  letter-spacing: -0.01em;
+}
 
 /* ========================================
    SOCIAL LINKS
@@ -579,6 +582,17 @@
     bottom: -15px;
   }
 
+   .home-intro {
+    max-width: 330px;
+
+    margin-top: 26px;
+
+    font-size: 15px;
+
+    line-height: 1.75;
+
+    letter-spacing: -0.01em;
+  }
 
   /* ========================================
      HERO
