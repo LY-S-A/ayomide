@@ -83,11 +83,10 @@ const Home = () => {
             Ayomide
           </h1>
 
-          <p className="home-intro">
-            I build high-converting landing pages and fully functional websites
-            <br />
-            that solve real problems.
-          </p>
+         <p className="home-intro">
+  I build high-converting landing pages and fully functional websites that
+  solve real problems.
+</p>
 
 
           {/* SOCIAL LINKS */}
