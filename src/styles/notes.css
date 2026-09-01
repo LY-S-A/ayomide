@@ -411,6 +411,44 @@
 
 
 /* ========================================
+   EMPTY / LOADING STATE
+======================================== */
+
+.notes-empty,
+.notes-loading {
+    width: 100%;
+
+    padding: 38px 5px;
+
+    border-bottom: 1px solid #242422;
+
+    color: #999790;
+
+    font-size: 15px;
+
+    line-height: 1.75;
+}
+
+
+/* EMPTY MESSAGE */
+
+.notes-empty {
+    min-height: 110px;
+
+    display: flex;
+    align-items: flex-start;
+}
+
+
+/* LOADING MESSAGE */
+
+.notes-loading {
+    color: #686660;
+
+    letter-spacing: 0.01em;
+}
+
+/* ========================================
    TABLET
 ======================================== */
 
@@ -562,6 +600,23 @@
         line-height: 1.7;
     }
 
+    /* ========================================
+   MOBILE EMPTY / LOADING STATE
+======================================== */
+
+.notes-empty,
+.notes-loading {
+    padding: 32px 4px;
+
+    font-size: 14px;
+
+    line-height: 1.7;
+}
+
+.notes-empty {
+    min-height: 95px;
+}
+   
     .notes-footer {
         min-height: 100px;
 
