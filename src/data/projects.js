@@ -1,70 +1,99 @@
+import oslbRegister from "../assets/visitors-reg.png";
+import oslbStaffLogin from "../assets/staff-login.png";
+import oslbVisitHistory from "../assets/visit-history.png";
+import oslbReports from "../assets/reports.png";
+
 const projects = [
-  {
-    id: "oslb-visitors-register",
-    name: "OSLB VISITORS REGISTER",
-    category: "WINDOWS DESKTOP APPLICATION",
-    description:
-      "A visitor management system developed for the Osun State Library Board to digitize visitor registration, records, visit history, and reporting.",
+    {
+        id: "oslb-visitors-register",
 
-    type: "Desktop Application",
-    platform: "Windows",
-    technology: "React · Electron · SQLite",
-    role: "Design & Development",
+        title: "Visitors Register",
 
-    overview: [
-      "A desktop application designed to provide a centralized digital workflow for managing library visitors.",
-      "The system combines visitor registration with a secure staff administration area, allowing visitor information and visit records to be managed digitally."
-    ],
+        category: "WINDOWS DESKTOP APPLICATION",
 
-    features: [
-      "Public visitor registration",
-      "Staff authentication",
-      "Visitor records management",
-      "Visit history tracking",
-      "Reports and data management",
-      "Application settings",
-      "Local SQLite database",
-      "Windows desktop packaging"
-    ],
+        description:
+            "A desktop visitor management system developed for the Osun State Library Board to digitize visitor registration, records, visit history, and reporting.",
 
-    technologies: [
-      {
-        name: "React",
-        role: "Interface"
-      },
-      {
-        name: "Electron",
-        role: "Desktop Runtime"
-      },
-      {
-        name: "SQLite",
-        role: "Local Database"
-      },
-      {
-        name: "Node.js",
-        role: "Application Logic"
-      }
-    ],
+        meta: [
+            {
+                label: "TYPE",
+                value: "Desktop Application",
+            },
+            {
+                label: "PLATFORM",
+                value: "Windows",
+            },
+            {
+                label: "TECHNOLOGY",
+                value: "React · Electron · SQLite",
+            },
+            {
+                label: "ROLE",
+                value: "Design & Development",
+            },
+        ],
 
-    screenshots: [
-      {
-        image: "/assets/visitors-reg.png",
-        title: "Visitors Registration"
-      },
-      {
-        image: "/projects/oslb/dashboard.png",
-        title: "Staff Dashboard"
-      },
-      {
-        image: "/projects/oslb/records.png",
-        title: "Visitor Records"
-      },
-      {
-        image: "/projects/oslb/reports.png",
-        title: "Reports"
-      }
-    ]
-  }
+        overview: [
+            "The OSLB Visitors Register is a desktop application designed to provide a centralized digital workflow for managing library visitors.",
+
+            "The system combines visitor registration with a secure staff administration area, allowing visitor information and visit records to be managed digitally.",
+        ],
+
+        features: [
+            "Public visitor registration",
+            "Staff authentication",
+            "Visitor records management",
+            "Visit history tracking",
+            "Reports and data management",
+            "Application settings",
+            "Local SQLite database",
+            "Windows desktop packaging",
+        ],
+
+        screenshots: [
+            {
+                image: oslbRegister,
+                title: "Visitors Registration",
+            },
+            {
+                image: oslbStaffLogin,
+                title: "Staff Login",
+            },
+            {
+                image: oslbVisitHistory,
+                title: "Visit History",
+            },
+            {
+                image: oslbReports,
+                title: "Reports",
+            },
+        ],
+
+        technologies: [
+            {
+                name: "React",
+                role: "Interface",
+            },
+            {
+                name: "Electron",
+                role: "Desktop Runtime",
+            },
+            {
+                name: "SQLite",
+                role: "Local Database",
+            },
+            {
+                name: "Node.js",
+                role: "Application Logic",
+            },
+        ],
+
+        endText:
+            "Built as a Windows desktop application.",
+
+        technologyLabel:
+            "REACT · ELECTRON · SQLITE",
+    },
 ];
 
 export default projects;
