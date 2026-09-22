@@ -1,7 +1,7 @@
 import oslbRegister from "../assets/visitors-reg.png";
 import oslbStaffLogin from "../assets/staff-login.png";
 import oslbVisitHistory from "../assets/visit-history.png";
-import oslbReports from "../assets/reports.png";
+import oslbReports from "../assets/report.png";
 
 const projects = [
     {
