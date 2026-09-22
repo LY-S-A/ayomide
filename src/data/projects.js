@@ -48,8 +48,8 @@ const projects = [
 
     screenshots: [
       {
-        image: "/projects/oslb/register.png",
-        title: "Visitor Registration"
+        image: "/assets/visitors-reg.png",
+        title: "Visitors Registration"
       },
       {
         image: "/projects/oslb/dashboard.png",
