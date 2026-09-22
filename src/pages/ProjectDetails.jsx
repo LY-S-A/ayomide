@@ -365,17 +365,13 @@ const ProjectDetails = () => {
 
             {/* FOOTER */}
 
-            <footer className="project-details-footer">
+            <footer className="home-footer">
 
-                <Link to="/">
-                    {project.footerName || "Ayomide"}
-                </Link>
+        <p>
+          © {new Date().getFullYear()} · Ayomide
+        </p>
 
-                <span>
-                    © {new Date().getFullYear()}
-                </span>
-
-            </footer>
+      </footer>
 
         </div>
     );
