@@ -26,6 +26,13 @@ const projects = [
       "A landing page for a tech agency.",
     link: "https://flixdigitals.vercel.app",
   },
+  {
+    name: "OSLB VISITORS REGISTER",
+    url: "DESKTOP APPLICATION",
+    description:
+      "A Windows desktop visitor management system built for the Osun State Library Board.",
+    link: "/projects/oslb-visitors-register",
+  },
 ];
 
 const Home = () => {
